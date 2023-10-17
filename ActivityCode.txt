@@ -1,0 +1,70 @@
+//Step 0 in manifest
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+//in aradle
+ implementation("androidx.compose.ui:ui-tooling:1.0.0")
+
+
+
+//STEP 1 on Activity
+private var pairedDevices: Set<BluetoothDevice>? = null
+private var bluetoothService: MyBluetoothService? = null
+
+private val BLUETOOTH_CONNECT_PERMISSION_REQUEST_CODE = 1
+
+private var messages: MutableList<String> = mutableStateListOf()
+
+//STEP 2 On onCreate
+requestPermissions()
+
+BluetoothAdapter.getDefaultAdapter()?.apply {
+    pairedDevices = this.bondedDevices
+    bluetoothService = MyBluetoothService(handler, this)
+}
+
+
+//STEP 3 on Activity bottom
+private fun requestPermissions() {
+    if (ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.BLUETOOTH_SCAN
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        // If permission is not granted, request it
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT),
+            BLUETOOTH_CONNECT_PERMISSION_REQUEST_CODE
+        )
+    }
+}
+
+private val handler: Handler = @SuppressLint("HandlerLeak") object : Handler() {
+
+    override fun handleMessage(msg: Message) {
+        when (msg.what) {
+            MESSAGE_WRITE -> {
+                val writeBuf = msg.obj as ByteArray
+                val writeMessage = String(writeBuf)
+                messages.add(writeMessage)
+            }
+
+            MESSAGE_READ -> {
+                val readBuf = msg.obj as ByteArray
+                val readMessage = String(readBuf, 0, msg.arg1)
+                messages.add(readMessage)
+            }
+        }
+    }
+}
+
+companion object {
+    val MY_UUID_SECURE_ESP_32: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    val MY_UUID_SECURE: UUID = UUID.fromString("fa87c0d0-afac-11de-8a36-0800200c9a66")
+    const val MESSAGE_READ = 2
+    const val MESSAGE_WRITE = 3
+}

@@ -1,0 +1,38 @@
+//build.gradle -> dependencies
+implementation("com.github.bumptech.glide:compose:1.0.0-alpha.5")
+
+//Local variables in activity
+private lateinit var getActivityResult: ActivityResultLauncher<String>
+private var selectedImageUri: Uri? by mutableStateOf(null)
+
+//in onCreate callback
+registerActivityResult()
+
+private fun openGallery() {
+    getActivityResult.launch("image/*")
+}
+
+private fun registerActivityResult() {
+    getActivityResult =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                selectedImageUri = it
+            }
+        }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun GlideCardImage(uri: Uri) {
+    GlideImage(
+        model = uri,
+        loading = placeholder(R.drawable.ic_launcher_foreground),
+        failure = placeholder(R.drawable.ic_launcher_foreground),
+        alignment = Alignment.Center,
+        modifier = Modifier
+            .size(200.dp)
+            .background(shape = CircleShape, color = Color.Transparent),
+        contentDescription = "",
+        transition = CrossFade
+    )
+}
